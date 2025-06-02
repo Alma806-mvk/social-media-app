@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Content AI Studio</title>
+  <link rel="icon" href="/cup icon.png" type="image/png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.js"></script>
+  <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.1.0/firebase-ui-auth.css" />
+  <style>
+    /* Custom scrollbar for better aesthetics */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a; /* slate-900 */
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155; /* slate-700 */
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569; /* slate-600 */
+    }
+    #firebaseui-auth-container,
+    #root {
+      display: none;
+    }
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.1.0",
+    "@/App": "/App.tsx"
+  }
+}
+</script>
+<script type="text/javascript">
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyBK1xOZKCNZgShvbgK41SIH0Gy4ueuv7O8",
+    authDomain: "content-creation-ai-e0f29.firebaseapp.com",
+    projectId: "content-creation-ai-e0f29",
+    storageBucket: "content-creation-ai-e0f29.firebasestorage.app",
+    messagingSenderId: "572383616929",
+    appId: "1:572383616929:web:b7fc03d5e059eae160f5e0",
+    measurementId: "G-L9LY1X9N43"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+
+  // FirebaseUI config.
+  var uiConfig = {
+    callbacks: {
+      signInSuccessWithAuthResult: function(authResult, redirectUrl) {
+        var user = authResult.user;
+        var credential = authResult.credential;
+        var isNewUser = authResult.additionalUserInfo.isNewUser;
+        var providerId = authResult.additionalUserInfo.providerId;
+        var operationType = authResult.operationType;
+        // Do something with the returned AuthResult.
+        // Return type determines whether we continue the redirect
+        // automatically or whether we leave that to developer to handle.
+        return true;
+      },
+      signInFailure: function(error) {
+        // Some unrecoverable error occurred during sign-in.
+        // For now, just log the error.
+        console.error("FirebaseUI sign-in error:", error);
+        // Return a promise when error handling is completed and FirebaseUI
+        // will reset, clearing any UI.
+        return Promise.resolve(); // Or handle the error more gracefully
+      },
+      uiShown: function() {
+        // The widget is rendered.
+        // You can hide a loader here if you have one.
+      }
+    },
+    credentialHelper: firebaseui.auth.CredentialHelper.NONE,
+    queryParameterForWidgetMode: 'mode',
+    queryParameterForSignInSuccessUrl: 'signInSuccessUrl',
+    signInFlow: 'popup',
+    signInSuccessUrl: 'https://content-creation-ai-e0f29.web.app/',
+    signInOptions: [
+      firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+      {
+        provider: firebase.auth.EmailAuthProvider.PROVIDER_ID,
+        requireDisplayName: true
+      },
+      {
+        provider: firebase.auth.PhoneAuthProvider.PROVIDER_ID,
+        recaptchaParameters: {
+          type: 'image',
+          size: 'invisible',
+          badge: 'bottomleft'
+        }
+      },
+    ],
+    immediateFederatedRedirect: false,
+    tosUrl: '/terms-of-service.html',
+    privacyPolicyUrl: '/privacy-policy.html'
+  };
+
+  // Initialize the FirebaseUI Widget using Firebase.
+  var ui = new firebaseui.auth.AuthUI(firebase.auth());
+  // The start method will wait until the DOM is loaded.
+  // Check if there's a pending redirect operation.
+  // if (ui.isPendingRedirect()) {
+  //   ui.start('#firebaseui-auth-container', uiConfig);
+  // } else {
+  //   // No pending redirect, start the UI normally.
+  //   ui.start('#firebaseui-auth-container', uiConfig);
+  // }
+
+  // Optional: Track auth state across pages
+  initApp = function() {
+    firebase.auth().onAuthStateChanged(function(user) {
+      if (user) {
+        // User is signed in.
+        console.log("User is signed in:", user);
+        document.getElementById('firebaseui-auth-container').style.display = 'none';
+        document.getElementById('root').style.display = 'block';
+      } else {
+        // User is signed out.
+        console.log("User is signed out.");
+        document.getElementById('firebaseui-auth-container').style.display = 'block';
+        document.getElementById('root').style.display = 'none';
+        // Only start FirebaseUI if the user is signed out and there is no pending redirect.
+        if (!ui.isPendingRedirect()) {
+          ui.start('#firebaseui-auth-container', uiConfig);
+        }
+      }
+    }, function(error) {
+      console.error("Authentication error:", error);
+    });
+  };
+
+  window.addEventListener('load', function() {
+    initApp();
+  });
+
+</script>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-indigo-950 to-black">
+  <div id="firebaseui-auth-container"></div>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html><link rel="stylesheet" href="index.css">
+<script src="index.tsx" type="module"></script>
