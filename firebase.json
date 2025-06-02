@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "social-media-productivity-app",
     "public": "dist",
     "ignore": [
       "firebase.json",
@@ -12,5 +13,11 @@
         "destination": "/index.html"
       }
     ]
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "database": {
+    "rules": "database.rules.json"
   }
 }
