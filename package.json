@@ -18,7 +18,6 @@
     "react-dom": "^19.1.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
-    "serve": "^17.0.0",
     "serve-handler": "^8.0.0"
   },
   "devDependencies": {
