@@ -43,9 +43,8 @@ import * as firebaseui from 'firebaseui'
 import 'firebaseui/dist/firebaseui.css'
 
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getAuth, User } from "firebase/auth"; // Import User from firebase/auth
+// REMOVE: import { User as FirebaseUserType } from 'firebase/auth'; // Renamed to avoid conflicts, ensure it's from compat/auth if issues persist
+// REMOVE: import { AuthResult } from 'firebaseui/auth'; // Import AuthResult for FirebaseUI
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -59,13 +58,29 @@ const firebaseConfig = {
   measurementId: "G-L9LY1X9N43"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const auth = getAuth(app);
+// Initialize Firebase using compat versions
+const app = firebase.initializeApp(firebaseConfig);
+const analytics = firebase.analytics();
+const auth = firebase.auth();
 
 // FirebaseUI config.
 const uiConfig = {
+  callbacks: {
+    signInSuccessWithAuthResult: function(authResult: firebase.auth.UserCredential, redirectUrl: string) {
+      // User successfully signed in.
+      // Return type determines whether we continue the redirect automatically
+      // or whether we leave that to developer to handle.
+      return true;
+    },
+    uiShown: function() {
+      // The widget is rendered.
+      // Hide the loader.
+      const loaderElement = document.getElementById('loader');
+      if (loaderElement) {
+        loaderElement.style.display = 'none';
+      }
+    }
+  },
   signInSuccessUrl: '/', // Redirect to home page on successful sign-in
   signInOptions: [
     firebase.auth.GoogleAuthProvider.PROVIDER_ID,
@@ -86,7 +101,7 @@ const LOCAL_STORAGE_TEMPLATES_KEY = 'socialContentAIStudio_templates_v3';
 const LOCAL_STORAGE_CUSTOM_PERSONAS_KEY = 'socialContentAIStudio_customPersonas_v1';
 const LOCAL_STORAGE_TREND_ANALYSIS_QUERIES_KEY = 'socialContentAIStudio_trendQueries_v1';
 const LOCAL_STORAGE_CALENDAR_EVENTS_KEY = 'socialContentAIStudio_calendarEvents_v1';
-const LOCAL_STORAGE_CANVAS_SNAPSHOTS_KEY = 'socialContentAIStudio_canvasSnapshots_v1'; 
+const LOCAL_STORAGE_CANVAS_SNAPSHOTS_KEY = 'socialContentAIStudio_canvasSnapshots_v1';
 
 
 const LOCAL_STORAGE_CANVAS_ITEMS_KEY = 'socialContentAIStudio_canvasItems_v11';
@@ -258,7 +273,7 @@ export const App = (): JSX.Element => {
     const [showTemplateModal, setShowTemplateModal] = useState<boolean>(false);
     const [currentTemplate, setCurrentTemplate] = useState<PromptTemplate | null>(null);
     const [viewingHistoryItemId, setViewingHistoryItemId] = useState<string | null>(null);
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<firebase.User | null>(null);
 
     const [selectedImageStyles, setSelectedImageStyles] = useState<ImagePromptStyle[]>([]);
     const [selectedImageMoods, setSelectedImageMoods] = useState<ImagePromptMood[]>([]);
@@ -423,13 +438,13 @@ export const App = (): JSX.Element => {
     useEffect(() => {
         const ui = firebaseui.auth.AuthUI.getInstance() || new firebaseui.auth.AuthUI(auth);
         if (ui.isPendingRedirect()) {
-            ui.start('#firebaseui-auth-container', uiConfig);
+            ui.start('#firebaseui-auth-container', uiConfig as any);
         }
 
         const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
             setUser(firebaseUser);
             if (!firebaseUser) {
-                ui.start('#firebaseui-auth-container', uiConfig);
+                ui.start('#firebaseui-auth-container', uiConfig as any);
             }
         });
 
@@ -2198,7 +2213,7 @@ export const App = (): JSX.Element => {
                 channelName = userInput.trim();
             } else {
                 // Attempt to extract channel/user/handle from YouTube URL in userInput
-                const urlMatch = userInput.match(/youtube\\.com\\/(?:channel\\/|user\\/|@)([a-zA-Z0-9_-]+)/i);
+                const urlMatch = userInput.match(new RegExp("youtube\\.com\\/(?:channel\\/|user\\/|@)([a-zA-Z0-9_-]+)", "i"));
                 if (urlMatch && urlMatch[1]) {
                     channelName = urlMatch[1];
                 } else {
@@ -2218,9 +2233,9 @@ export const App = (): JSX.Element => {
                 let value = match[1].replace(/,/g, '');
                 let num = 0;
                 if (value.endsWith('M')) {
-                    num = parseFloat(value.slice(0, -1)) * 1_000_000;
+                    num = parseFloat(value.slice(0, -1)) * 1000000;
                 } else if (value.endsWith('K')) {
-                    num = parseFloat(value.slice(0, -1)) * 1_000;
+                    num = parseFloat(value.slice(0, -1)) * 1000;
                 } else {
                     num = parseFloat(value);
                 }
