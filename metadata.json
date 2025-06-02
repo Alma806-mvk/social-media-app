@@ -1,0 +1,8 @@
+{
+  "name": "Social Media Hub",
+  "description": "An AI-powered application to generate various types of social media content for platforms like YouTube, TikTok, and Instagram, including scripts, ideas, titles, image prompts, and direct image generation using Gemini API.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "prompt": ""
+}
