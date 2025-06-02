@@ -69,17 +69,15 @@ const uiConfig = {
   signInSuccessUrl: '/', // Redirect to home page on successful sign-in
   signInOptions: [
     firebase.auth.GoogleAuthProvider.PROVIDER_ID,
-    firebase.auth.FacebookAuthProvider.PROVIDER_ID,
-    firebase.auth.TwitterAuthProvider.PROVIDER_ID,
-    firebase.auth.GithubAuthProvider.PROVIDER_ID,
+    // firebase.auth.FacebookAuthProvider.PROVIDER_ID,
+    // firebase.auth.TwitterAuthProvider.PROVIDER_ID,
+    // firebase.auth.GithubAuthProvider.PROVIDER_ID,
     firebase.auth.EmailAuthProvider.PROVIDER_ID,
     firebase.auth.PhoneAuthProvider.PROVIDER_ID,
-    firebaseui.auth.AnonymousAuthProvider.PROVIDER_ID
+    // firebaseui.auth.AnonymousAuthProvider.PROVIDER_ID
   ],
-  tosUrl: '<your-tos-url>',
-  privacyPolicyUrl: function() {
-    window.location.assign('<your-privacy-policy-url>');
-  }
+  tosUrl: '/terms-of-service.html',
+  privacyPolicyUrl: '/privacy-policy.html'
 };
 
 const MAX_HISTORY_ITEMS = 50;
@@ -98,7 +96,7 @@ const LOCAL_STORAGE_CANVAS_HISTORY_KEY = 'socialContentAIStudio_canvasHistory_v1
 
 const parseJsonSafely = <T,>(jsonString: string): T | null => {
     let cleanJsonString = jsonString.trim();
-    const fenceRegex = /^```(\w*)?\s*\n?(.*?)\n?\s*```$/s;
+    const fenceRegex = /^```(\\w*)?\\s*\\n?(.*?)\\n?\\s*```$/s;
     const matchResult = cleanJsonString.match(fenceRegex);
     if (matchResult && matchResult[2]) {
         cleanJsonString = matchResult[2].trim();
@@ -218,7 +216,7 @@ const parseChannelAnalysisOutput = (text: string, groundingSources?: Source[]): 
         const section: ParsedChannelAnalysisSection = { title: sectionTitle, content: sectionContent };
 
         if (sectionTitle.includes("'Low-Hanging Fruit' Video Ideas") || sectionTitle.includes("Potential Content Gaps & Strategic Opportunities")) {
-            section.ideas = sectionContent.split('\n')
+            section.ideas = sectionContent.split('\\n')
                 .map(line => line.trim())
                 .filter(line => line.startsWith("- Video Idea:") || line.startsWith("- Content Gap:"))
                 .map(line => line.substring(line.indexOf(':') + 1).trim());
@@ -260,7 +258,7 @@ export const App = (): JSX.Element => {
     const [showTemplateModal, setShowTemplateModal] = useState<boolean>(false);
     const [currentTemplate, setCurrentTemplate] = useState<PromptTemplate | null>(null);
     const [viewingHistoryItemId, setViewingHistoryItemId] = useState<string | null>(null);
-    const [user, setUser] = useState<firebase.User | null>(null);
+    const [user, setUser] = useState<User | null>(null);
 
     const [selectedImageStyles, setSelectedImageStyles] = useState<ImagePromptStyle[]>([]);
     const [selectedImageMoods, setSelectedImageMoods] = useState<ImagePromptMood[]>([]);
@@ -504,7 +502,7 @@ export const App = (): JSX.Element => {
                 setCanvasOffset(lastState.canvasOffset);
                 setZoomLevel(lastState.zoomLevel);
             }
-        } else {
+                                } else {
              const initialEntry: CanvasHistoryEntry = { items: JSON.parse(JSON.stringify(initialCanvasItems)), nextZIndex: initialNextZ, canvasOffset: initialCanvasOffsetVal, zoomLevel: initialZoomLevelVal };
              setCanvasHistory([initialEntry]);
              setCurrentCanvasHistoryIndex(0);
@@ -644,7 +642,7 @@ export const App = (): JSX.Element => {
 
     const parseTrendAnalysisText = (text: string, query: string, sources?: Source[]): TrendAnalysisOutput => {
         const items: TrendItem[] = [];
-        const itemRegex = /--- Trend Item Start ---\s*Title:\s*(.*?)\s*Snippet:\s*(.*?)\s*Source Type:\s*(news|discussion|topic|video)\s*(?:Link:\s*(.*?)\s*)?--- Trend Item End ---/gs;
+        const itemRegex = /--- Trend Item Start ---\\s*Title:\\s*(.*?)\\s*Snippet:\\s*(.*?)\\s*Source Type:\\s*(news|discussion|topic|video)\\s*(?:Link:\\s*(.*?)\\s*)?--- Trend Item End ---/gs;
         let match;
         while ((match = itemRegex.exec(text)) !== null) {
             items.push({
@@ -810,7 +808,7 @@ export const App = (): JSX.Element => {
                 } else if (effectiveContentType === ContentType.CheckReadability) {
                     let scoreDesc = "Could not determine readability score.";
                     let simplifiedTxt: string | undefined = undefined;
-                    const simpleDescMatch = text.match(/^([\w\s.,'":;-]+)\s*(?:Simplified Version:([\s\S]*))?$/i);
+                    const simpleDescMatch = text.match(/^([\w\\s.,'":;-]+)\\s*(?:Simplified Version:([\\s\\S]*))?$/i);
                     if (simpleDescMatch && simpleDescMatch[1]) {
                         scoreDesc = simpleDescMatch[1].trim();
                         if (simpleDescMatch[2]) simplifiedTxt = simpleDescMatch[2].trim();
@@ -1118,7 +1116,7 @@ export const App = (): JSX.Element => {
         const newCanvasItem: CanvasItem = {
             id: newId,
             type: 'textElement',
-            content: `YouTube Stats for ${entry.userInput}:\n\n${entry.content}`,
+            content: `YouTube Stats for ${entry.userInput}:\\n\\n${entry.content}`,
             x: (Math.random() * 200 + 50 - canvasOffset.x) / zoomLevel,
             y: (Math.random() * 200 + 50 - canvasOffset.y) / zoomLevel,
             zIndex: nextZIndex,
@@ -1193,20 +1191,20 @@ export const App = (): JSX.Element => {
             if (isGeneratedTextOutput(output)) processedTextToCopy = output.content;
             else if (isGeneratedImageOutput(output)) processedTextToCopy = `Image: ${output.base64Data.substring(0,100)}... (Full data not copied)`;
             else if (Array.isArray(output) && output.every(s => typeof s === 'object' && s !== null && 'title' in s && 'content' in s)) {
-                processedTextToCopy = (output as ParsedChannelAnalysisSection[]).map(s => `## ${s.title}\n${s.content}`).join('\n\n');
+                processedTextToCopy = (output as ParsedChannelAnalysisSection[]).map(s => `## ${s.title}\\n${s.content}`).join('\\n\\n');
             } else if (isContentStrategyPlanOutput(output)) {
                 processedTextToCopy = JSON.stringify(output, null, 2);
             } else if (isTrendAnalysisOutput(output)) {
                  processedTextToCopy = JSON.stringify(output, null, 2);
             } else if (Array.isArray(output) && output.length > 0 && 'suggestedPrompt' in output[0]) {
-                processedTextToCopy = (output as PromptOptimizationSuggestion[]).map(s => `Suggestion:\n${s.suggestedPrompt}\nReasoning: ${s.reasoning || 'N/A'}`).join('\n\n---\n\n');
+                processedTextToCopy = (output as PromptOptimizationSuggestion[]).map(s => `Suggestion:\\n${s.suggestedPrompt}\\nReasoning: ${s.reasoning || 'N/A'}`).join('\\n\\n---\\n\\n');
             } else if (typeof output === 'object' && output !== null && 'titleSuggestions' in output) {
                 processedTextToCopy = JSON.stringify(output, null, 2);
             } else if (typeof output === 'object' && output !== null && 'items' in output && 'type' in output && (output.type === 'poll' || output.type === 'quiz')) {
                 processedTextToCopy = JSON.stringify(output, null, 2);
             } else if (typeof output === 'object' && output !== null && 'scoreDescription' in output) {
                 const readabilityOutput = output as ReadabilityOutput;
-                processedTextToCopy = `Readability: ${readabilityOutput.scoreDescription}\n${readabilityOutput.simplifiedContent ? `Simplified: ${readabilityOutput.simplifiedContent}` : ''}`;
+                processedTextToCopy = `Readability: ${readabilityOutput.scoreDescription}\\n${readabilityOutput.simplifiedContent ? `Simplified: ${readabilityOutput.simplifiedContent}` : ''}`;
             } else if (isEngagementFeedbackOutput(output)) {
                 processedTextToCopy = output.feedback;
             }
@@ -1318,7 +1316,7 @@ export const App = (): JSX.Element => {
         if (parsedChannelAnalysis) {
             const personaSection = parsedChannelAnalysis.find(s => s.title.includes("Inferred Target Audience Personas"));
             if (personaSection && personaSection.content) {
-                const firstPersona = personaSection.content.split('\n')[0].trim();
+                const firstPersona = personaSection.content.split('\\n')[0].trim();
                 if (firstPersona) setTargetAudience(firstPersona);
             }
         }
@@ -1335,7 +1333,7 @@ export const App = (): JSX.Element => {
             setError("No channel analysis available to summarize.");
             return;
         }
-        const fullAnalysisText = parsedChannelAnalysis.map(section => `## ${section.title}\n${section.content}`).join('\n\n');
+        const fullAnalysisText = parsedChannelAnalysis.map(section => `## ${section.title}\\n${section.content}`).join('\\n\\n');
         const summarizationInstruction = "Summarize the following YouTube channel analysis concisely, highlighting key strategic insights and actionable recommendations. Focus on the most important takeaways for a content creator.";
 
         handleActualGeneration(ContentType.RefinedText, "Summary of YouTube Channel Analysis", {
@@ -1736,7 +1734,7 @@ export const App = (): JSX.Element => {
         try {
             const contentRect = transformedContent.getBoundingClientRect();
             const canvasElement = await html2canvas(transformedContent, {
-                background: '#0f172a', 
+                backgroundColor: '#0f172a', // Renamed from 'background'
                 logging: true,
                 useCORS: true,
             });
@@ -1856,17 +1854,25 @@ export const App = (): JSX.Element => {
 
     const parseAndStyleText = (text: string): React.ReactNode[] => {
         const elements: React.ReactNode[] = [];
-        const lines = text.split('\n');
+        const lines = text.split('\\n');
         let listItems: string[] = [];
         let inList = false;
     
-        const flushList = () => {
+        const flushList = (listType: 'ul' | 'ol' = 'ul') => {
             if (inList && listItems.length > 0) {
-                elements.push(
-                    <ul key={`list-${elements.length}`} className="list-disc list-inside space-y-1 my-3 pl-4 text-slate-300">
-                        {listItems.map((item, idx) => <li key={idx} dangerouslySetInnerHTML={{ __html: styleLine(item) }} />)}
-                    </ul>
-                );
+                if (listType === 'ul') {
+                    elements.push(
+                        <ul key={`list-${elements.length}`} className="list-disc list-inside space-y-1 my-3 pl-4 text-slate-300">
+                            {listItems.map((item, idx) => <li key={idx} dangerouslySetInnerHTML={{ __html: styleLine(item) }} />)}
+                        </ul>
+                    );
+                } else {
+                    elements.push(
+                        <ol key={`list-${elements.length}`} className="list-decimal list-inside space-y-1 my-3 pl-4 text-slate-300">
+                            {listItems.map((item, idx) => <li key={idx} dangerouslySetInnerHTML={{ __html: styleLine(item) }} />)}
+                        </ol>
+                    );
+                }
             }
             listItems = [];
             inList = false;
@@ -1874,8 +1880,8 @@ export const App = (): JSX.Element => {
     
         const styleLine = (line: string) => {
             return line
-                .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-sky-300">$1</strong>')
-                .replace(/\*(.*?)\*/g, '<em class="italic text-sky-400">$1</em>');
+                .replace(/\\*\\*(.*?)\\*\\*/g, '<strong class="font-semibold text-sky-300">$1</strong>')
+                .replace(/\\*(.*?)\\*/g, '<em class="italic text-sky-400">$1</em>');
         };
     
         lines.forEach((line, index) => {
@@ -1939,23 +1945,23 @@ export const App = (): JSX.Element => {
     };
 
     const exportContentAsMarkdown = (content: HistoryItem['output'], title?: string) => {
-        let markdownContent = `# ${title || 'AI Generated Content'}\n\n`;
+        let markdownContent = `# ${title || 'AI Generated Content'}\\n\\n`;
         if (isGeneratedTextOutput(content)) {
              markdownContent += content.content;
              if (content.groundingSources && content.groundingSources.length > 0) {
-                markdownContent += "\n\n## Sources\n";
-                content.groundingSources.forEach(s => markdownContent += `- [${s.title || s.uri}](${s.uri})\n`);
+                markdownContent += "\\n\\n## Sources\\n";
+                content.groundingSources.forEach(s => markdownContent += `- [${s.title || s.uri}](${s.uri})\\n`);
              }
         } else if (isContentStrategyPlanOutput(content)) {
-            markdownContent += `## Target Audience\n${content.targetAudienceOverview}\n\n## Goals\n${content.goals.join(', ')}\n\n`;
-            markdownContent += `## Content Pillars\n`;
-            content.contentPillars.forEach(p => { markdownContent += `### ${p.pillarName}\n${p.description}\nKeywords: ${p.keywords.join(', ')}\n\n`; });
-            markdownContent += `## Key Themes\n`;
-            content.keyThemes.forEach(t => { markdownContent += `### ${t.themeName}\n${t.description}\nRelated Pillars: ${t.relatedPillars.join(', ')}\nIdeas:\n${t.contentIdeas.map(ci => `- ${ci.title} (${ci.format} for ${ci.platform})`).join('\n')}\n\n`; });
-            markdownContent += `## Suggested Schedule\n${content.suggestedWeeklySchedule.map(si => `- ${si.dayOfWeek}: ${si.contentType} - ${si.topicHint} (${si.platform})`).join('\n')}\n\n`;
-            markdownContent += `## KPIs\n${content.kpiSuggestions.join(', ')}`;
+            markdownContent += `## Target Audience\\n${content.targetAudienceOverview}\\n\\n## Goals\\n${content.goals.join(', ')}\\n\\n`;
+            markdownContent += `## Content Pillars\\n`;
+            content.contentPillars.forEach(p => { markdownContent += `### ${p.pillarName}\\n${p.description}\\nKeywords: ${p.keywords.join(', ')}\\n\\n`; });
+            markdownContent += `## Key Themes\\n`;
+            content.keyThemes.forEach(t => { markdownContent += `### ${t.themeName}\\n${t.description}\\nRelated Pillars: ${t.relatedPillars.join(', ')}\\nIdeas:\\n${t.contentIdeas.map(ci => `- ${ci.title} (${ci.format} for ${ci.platform})`).join('\\n')}\\n\\n`; });
+            markdownContent += `## Suggested Schedule\\n${content.suggestedWeeklySchedule.map(si => `- ${si.dayOfWeek}: ${si.contentType} - ${si.topicHint} (${si.platform})`).join('\\n')}\\n\\n`;
+            markdownContent += `## KPIs\\n${content.kpiSuggestions.join(', ')}`;
         } else if (Array.isArray(content) && content.every(s => typeof s === 'object' && s !== null && 'title' in s && 'content' in s)) { 
-            markdownContent += (content as ParsedChannelAnalysisSection[]).map(s => `## ${s.title}\n${s.content}${s.sources ? `\n\n**Sources:**\n${s.sources.map(src => `- [${src.title || src.uri}](${src.uri})`).join('\n')}` : ''}${s.ideas ? `\n\n**Ideas:**\n${s.ideas.map(idea => `- ${idea}`).join('\n')}`: ''}`).join('\n\n---\n\n');
+            markdownContent += (content as ParsedChannelAnalysisSection[]).map(s => `## ${s.title}\\n${s.content}${s.sources ? `\\n\\n**Sources:**\\n${s.sources.map(src => `- [${src.title || src.uri}](${src.uri})`).join('\\n')}` : ''}${s.ideas ? `\\n\\n**Ideas:**\\n${s.ideas.map(idea => `- ${idea}`).join('\\n')}`: ''}`).join('\\n\\n---\\n\\n');
         } else if (typeof content === 'string') { // Handle direct string output for youtubeStats
             markdownContent += content;
         } else {
@@ -2156,7 +2162,7 @@ export const App = (): JSX.Element => {
             );
         }  else if (canvasItem.type === 'frameElement') {
             return (
-                <div key={canvasItem.id} style={{ ...baseStyle, backgroundColor: canvasItem.backgroundColor || 'rgba(255,255,255,0.03)', border: `2px dashed ${canvasItem.borderColor || DEFAULT_SHAPE_BORDER_COLOR}` }} onMouseDown={(e) => handleCanvasItemMouseDown(e, canvasItem.id)} onClick={() => setSelectedCanvasItemId(canvasItem.id)} className="flex items-center justify-center" >
+                <div key={canvasItem.id} style={{ ...baseStyle, backgroundColor: canvasItem.backgroundColor || 'rgba(255,255,255,0.03)', border: `2px dashed ${canvasItem.borderColor || DEFAULT_SHAPE_BORDER_COLOR}` }} onMouseDown={(e) => handleCanvasItemMouseDown(e, canvasItem.id)} onClick={() => setSelectedCanvasItemId(canvasItem.id)} className="flex items-center justify-content" >
                     {itemSpecificControls}
                     {resizeHandle}
                 </div>
@@ -2183,7 +2189,7 @@ export const App = (): JSX.Element => {
         let channelName: string = 'N/A';
 
         // Try to find channel name with label "Channel Name:"
-        const channelNameMatch = content.match(/Channel Name:\s*(.*)/i);
+        const channelNameMatch = content.match(/Channel Name:\\s*(.*)/i);
         if (channelNameMatch && channelNameMatch[1]) {
             channelName = channelNameMatch[1].trim();
         } else {
@@ -2192,12 +2198,12 @@ export const App = (): JSX.Element => {
                 channelName = userInput.trim();
             } else {
                 // Attempt to extract channel/user/handle from YouTube URL in userInput
-                const urlMatch = userInput.match(/youtube\.com\/(?:channel\/|user\/|@)([a-zA-Z0-9_-]+)/i);
+                const urlMatch = userInput.match(/youtube\\.com\\/(?:channel\\/|user\\/|@)([a-zA-Z0-9_-]+)/i);
                 if (urlMatch && urlMatch[1]) {
                     channelName = urlMatch[1];
                 } else {
                     // Last resort: try to find a channel name in the content that isn't a URL or a number
-                    const potentialChannelNameMatch = content.match(/^(?!https?:\/\/|www\.)([a-zA-Z0-9\s._-]+?)(?:\s+has|\s+with|\s+-\s+)/i);
+                    const potentialChannelNameMatch = content.match(/^(?!https?:\/\/.|www\\.)([a-zA-Z0-9\\s._-]+?)(?:\\s+has|\\s+with|\\s+-\\s+)/i);
                     if (potentialChannelNameMatch && potentialChannelNameMatch[1]) {
                         channelName = potentialChannelNameMatch[1].trim();
                     }
@@ -2227,9 +2233,9 @@ export const App = (): JSX.Element => {
         console.log("Content for parsing:", content);
         console.log("User Input for parsing:", userInput);
 
-        const subscribers = getNumericValue(content, /(?:^|\n)\s*(?:Subscribers|Subscribed to|Followers):?\s*([\d,\.]+(?:\s*M|\s*K)?)(?:\s+or.*)?/im);
-        const videos = getNumericValue(content, /(?:^|\n)\s*(?:Total Videos|Videos|Uploaded videos|Number of videos):\s*([\d,]+(?:\s*K)?)/im);
-        const totalViews = getNumericValue(content, /(?:^|\n)\s*(?:All-time Views|Total Views|Views|Overall views):\s*([\d,]+(?:\s*B|\s*M|\s*K)?)/im);
+        const subscribers = getNumericValue(content, /(?:^|\\n)\\s*(?:Subscribers|Subscribed to|Followers):?\\s*([\\d,\\.]+(?:\\s*M|\\s*K)?)(?:\\s+or.*)?/im);
+        const videos = getNumericValue(content, /(?:^|\\n)\\s*(?:Total Videos|Videos|Uploaded videos|Number of videos):\\s*([\\d,]+(?:\\s*K)?)/im);
+        const totalViews = getNumericValue(content, /(?:^|\\n)\\s*(?:All-time Views|Total Views|Views|Overall views):\\s*([\\d,]+(?:\\s*B|\\s*M|\\s*K)?)/im);
 
         // Debugging: Log extracted values
         console.log("Extracted Subscribers:", subscribers);
@@ -2288,7 +2294,7 @@ export const App = (): JSX.Element => {
 
     const handlePinChannelTableEntryToCanvas = useCallback((entry: ChannelTableEntry) => {
         const newId = crypto.randomUUID();
-        const tableContent = `Channel: ${entry.channelName}\nSubscribers: ${entry.subscribers.toLocaleString()}\nVideos: ${entry.videos.toLocaleString()}\nTotal Views: ${entry.totalViews.toLocaleString()}\nAvg Views/Video: ${entry.averageViewsPerVideo.toLocaleString()}`;
+        const tableContent = `Channel: ${entry.channelName}\\nSubscribers: ${entry.subscribers.toLocaleString()}\\nVideos: ${entry.videos.toLocaleString()}\\nTotal Views: ${entry.totalViews.toLocaleString()}\\nAvg Views/Video: ${entry.averageViewsPerVideo.toLocaleString()}`;
         const newCanvasItem: CanvasItem = {
             id: newId,
             type: 'textElement',
@@ -2316,14 +2322,14 @@ export const App = (): JSX.Element => {
     }, [canvasItems, nextZIndex, canvasOffset, zoomLevel, commitCurrentStateToHistory]);
 
     const generateTableMarkdown = useCallback((data: ChannelTableEntry[], sortOrder: string): string => {
-        let markdown = "### Channel Comparison Table\n\n";
-        markdown += "| Channel Name | Subscribers | Videos | Total Views | Avg. Views/Video |\n";
-        markdown += "|--------------|-------------|--------|-------------|------------------|\n";
+        let markdown = "### Channel Comparison Table\\n\\n";
+        markdown += "| Channel Name | Subscribers | Videos | Total Views | Avg. Views/Video |\\n";
+        markdown += "|--------------|-------------|--------|-------------|------------------|\\n";
 
         const sortedData = sortChannels(data, sortOrder);
 
         sortedData.forEach(entry => {
-            markdown += `| ${entry.channelName} | ${entry.subscribers.toLocaleString()} | ${entry.videos.toLocaleString()} | ${entry.totalViews.toLocaleString()} | ${entry.averageViewsPerVideo.toLocaleString()} |\n`;
+            markdown += `| ${entry.channelName} | ${entry.subscribers.toLocaleString()} | ${entry.videos.toLocaleString()} | ${entry.totalViews.toLocaleString()} | ${entry.averageViewsPerVideo.toLocaleString()} |\\n`;
         });
 
         return markdown;
